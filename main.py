@@ -98,7 +98,7 @@ class SearchQuery:
 
         for name, h in self.pictures_hashes.items():
             n = harris.compare_hashes(h, target_hash)
-            if n > 5:
+            if n > 30:
                 return target_hash, n, name
         return target_hash, 0, ''
 
