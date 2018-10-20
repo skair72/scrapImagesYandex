@@ -1,0 +1,1 @@
+This script grab images from yandex and save only original ones (Harris algorithm)
