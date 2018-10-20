@@ -6,7 +6,7 @@ I wrote a really useful script for scrapping only original images from yandex
 
 You need a python >=3.6
 
-Just clon my repo and run main.py with flags, where:
+Just clone my repo and run main.py with flags, where:
 
 * Number of images: -c
 * Folder to save: -f
