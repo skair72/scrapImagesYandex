@@ -1,6 +1,6 @@
 # A tool for scrapping images from yandex
 
-I wrote a really useful script for scrapping only original images from yandex
+I wrote a really useful script for scraping only original images from yandex
 
 ## Getting Started
 
