@@ -1,6 +1,6 @@
-# A tool for scrapping images from yandex
+# A tool for scraping images from Yandex
 
-I wrote a really useful script for scraping only original images from yandex
+I've written a really useful script for scraping only original images from Yandex
 
 ## Getting Started
 
@@ -12,9 +12,9 @@ Just clone my repo and run main.py with flags, where:
 * Folder to save: -f
 * Search request: -s
 
-If yandex need captcha, a window with captcha image is poping up. Write a text to console and hit enter.
+If Yandex asks a captcha, a window with a captcha is popping up. Just write a text in the console and hit enter.
 
-If new scrapped image is a copy of old one, harris algorithm provide that, and write a log to console.
+If a new scraped image is a copy of the old one, Harris algorithm handles that, and write a log to console.
 
 ## How to use:
 ```
