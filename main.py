@@ -1,20 +1,24 @@
-import requests
-from bs4 import BeautifulSoup
+import json
 import os
-import click
-import harris
 import urllib.request
+
+import click
 import cv2
 import numpy as np
-import json
-from skimage import io
+import requests
+from bs4 import BeautifulSoup
+
+import harris
+
+BASE_DIR = 'downloaded'
+
 
 @click.command()
 @click.option('--count', '-c', default=12, help='number of images')
-@click.option('--folder', '-f', default='downloaded', help='folder to save images')
+@click.option('--folder', '-f', default='unnamed', help='folder to save images')
 @click.option('--search', '-s', default='test', help='search request')
 def main(count, folder, search):
-    S = SearchQuery(search, count, folder)
+    S = SearchQuery(search, count, os.path.join(BASE_DIR, folder, search))
     S.search_pictures()
 
 
@@ -33,20 +37,21 @@ class SearchQuery:
             'User-Agent': 'Opera/9.80 (Series 60; Opera Mini/7.1.32444/34.861; U; en) Presto/2.8.119 Version/11.10'
         }
 
-        if os.path.exists(os.path.join(self.search_text, 'hashes.json')):
-            self.pictures_hashes = json.load(open(os.path.join(self.search_text, 'hashes.json'), 'r+'))
+        self.root_dir = path
+        os.makedirs(self.root_dir, exist_ok=True)
+        self.images_dir = os.path.join(self.root_dir, 'images')
+        os.makedirs(self.images_dir, exist_ok=True)
+        self.pages_dir = os.path.join(self.root_dir, 'pages')
+        os.makedirs(self.pages_dir, exist_ok=True)
+
+        if os.path.exists(os.path.join(self.root_dir, 'hashes.json')):
+            self.pictures_hashes = json.load(open(os.path.join(self.root_dir, 'hashes.json'), 'r+'))
             self.good_pic_found = int(list(self.pictures_hashes.keys())[-1][:-4])
         else:
             self.good_pic_found = 0
             self.pictures_hashes = dict()
-        self.path = path
-
-        make_path(search_text)
-        make_path(os.path.join(search_text, path))
-        make_path(os.path.join(search_text, 'pages'))
 
         self.last_request = None
-        self.openedWindow = False
 
     def search_pictures(self):
         while self.num_of_pic > self.good_pic_found:
@@ -57,7 +62,7 @@ class SearchQuery:
 
             self.last_request = r
             print(f'page {self.current_page + 1}')
-            with open(os.path.join(self.search_text, 'pages', f'{self.current_page}.html'), 'w+') as f:
+            with open(os.path.join(self.pages_dir, f'{self.current_page}.html'), 'w+') as f:
                 f.write(r.text)
                 f.close()
             self.download_thumbnails(r)
@@ -72,9 +77,6 @@ class SearchQuery:
             soup = BeautifulSoup(r.text, 'html.parser')
             hrefs = soup.findAll('img', {'class': 'serp-item__image'})
 
-        if self.openedWindow:
-            self.openedWindow = False
-
         for img in hrefs:
             pic_url = 'https:' + str(img.get('src')[:-2] + '32')
             # print(pic_url)
@@ -86,9 +88,9 @@ class SearchQuery:
                 continue
 
             self.good_pic_found += 1
-            cv2.imwrite(os.path.join(self.search_text, self.path, f'{self.good_pic_found}.jpg'), image)
+            cv2.imwrite(os.path.join(self.images_dir, f'{self.good_pic_found}.jpg'), image)
             self.pictures_hashes.update({f'{self.good_pic_found}.jpg': image_hash})
-            json.dump(self.pictures_hashes, open(os.path.join(self.search_text, 'hashes.json'), 'w+'))
+            json.dump(self.pictures_hashes, open(os.path.join(self.root_dir, 'hashes.json'), 'w+'))
             print(f'{self.good_pic_found}/{self.num_of_pic}')
 
     def is_copy(self, image):
@@ -109,21 +111,21 @@ class SearchQuery:
         key = soup.find('input', {'class': 'form__key'}).get('value')
         repath = soup.find('input', {'class': 'form__retpath'}).get('value')
 
-        image = io.imread(src)
-        self.openedWindow = True
-        cv2.imshow('Captcha', image)
-        params = {
-            'key': key,
-            'retpath': repath,
-            'rep': input('enter captcha: ')
-        }
-        cv2.destroyWindow('Captcha')
-        cv2.waitKey(1)
+        # image = io.imread(src)
+        # self.openedWindow = True
+        # cv2.imshow('Captcha', image)
+        # params = {
+        #     'key': key,
+        #     'retpath': repath,
+        #     'rep': input('enter captcha: ')
+        # }
+        # cv2.destroyWindow('Captcha')
+        # cv2.waitKey(1)
 
-        r = self.S.get('https://m.yandex.ru/checkcaptcha', params=params)
+        r = self.S.get('https://m.yandex.ru/checkcaptcha', params={})
         self.last_request = r
 
-        with open(os.path.join(self.search_text, 'pages', 'captcha.html'), 'w+') as f:
+        with open(os.path.join(self.pages_dir, 'captcha.html'), 'w+') as f:
             f.write(r.text)
             f.close()
 
@@ -137,11 +139,6 @@ def url_to_image(url):
 
     # return the image
     return img
-
-
-def make_path(path):
-    if not os.path.exists(path):
-        os.makedirs(path)
 
 
 main()
